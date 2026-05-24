@@ -1,0 +1,14 @@
+Package: cie11lat
+Title: CIE-11 en Espanol para Chile y Latinoamerica
+Version: 0.0.0.9000
+Authors@R:
+    person("Rodolfo", "Tasso", , "rtasso@uchile.cl", role = c("aut", "cre"))
+Description: Acceso a la Clasificacion Internacional de Enfermedades, 11.a
+    revision (CIE-11), en espanol, orientado a Chile y Latinoamerica.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+Suggests:
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
