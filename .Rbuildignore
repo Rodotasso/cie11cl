@@ -1,6 +1,9 @@
 ^cie11lat\.Rproj$
+^cie11cl\.Rproj$
 ^\.Rproj\.user$
 ^\.github$
 ^README\.Rmd$
 ^LICENSE\.md$
 ^\.git$
+^data-raw$
+^data$

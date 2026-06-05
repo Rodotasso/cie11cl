@@ -1,14 +1,25 @@
-Package: cie11lat
-Title: CIE-11 en Espanol para Chile y Latinoamerica
-Version: 0.0.0.9000
+Package: cie11cl
+Title: ICD-11 (CIE-11) Access and ICD-10 to ICD-11 Crosswalks for Chile
+Version: 0.1.0
 Authors@R:
     person("Rodolfo", "Tasso", , "rtasso@uchile.cl", role = c("aut", "cre"))
-Description: Acceso a la Clasificacion Internacional de Enfermedades, 11.a
-    revision (CIE-11), en espanol, orientado a Chile y Latinoamerica.
+Description: Deterministic access to the World Health Organization
+    International Classification of Diseases, 11th Revision (ICD-11, MMS
+    linearization) in Spanish, with code lookup, lexical search and
+    ICD-10 to ICD-11 crosswalks carrying traceable certainty levels,
+    oriented to the Chilean health system. The package ships code only:
+    users load their own ICD-11 release and mapping tables at runtime; no
+    classification data is bundled. The same input plus the same versioned
+    reference data always yields the same output.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
+Imports:
+    stringdist,
+    utils
 Suggests:
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
+URL: https://github.com/RodoTasso/cie11cl
+BugReports: https://github.com/RodoTasso/cie11cl/issues
+Config/roxygen2/version: 8.0.0

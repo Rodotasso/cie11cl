@@ -1,4 +1,4 @@
 library(testthat)
-library(cie11lat)
+library(cie11cl)
 
-test_check("cie11lat")
+test_check("cie11cl")

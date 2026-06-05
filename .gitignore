@@ -4,3 +4,21 @@
 .Ruserdata
 .httr-oauth
 .DS_Store
+
+# Datos de la clasificacion: NUNCA versionar (licencia OMS / posibles datos sensibles)
+*.csv
+*.tsv
+*.xlsx
+*.xls
+*.sqlite
+*.sqlite3
+*.db
+*.duckdb
+*.rda
+*.rds
+*.parquet
+*.feather
+*.zip
+data/
+data-raw/
+inst/extdata/
