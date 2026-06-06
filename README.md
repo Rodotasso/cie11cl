@@ -45,7 +45,15 @@ cie11_load(
 )
 cie11_search("fiebre tifoidea")
 cie11_map_from_icd10("A010")
+
+# 3) Backend SQL: consulta directa sobre una base CIE-11 SQLite local
+cie11_connect("data/cie11_mms_2026.db")              # tabla por defecto: cie11
+cie11_sql("SELECT code, title FROM cie11 WHERE code LIKE '1A%'")
+cie11_disconnect()
 ```
+
+El backend SQL requiere los paquetes `DBI` y `RSQLite` (opcionales). La base de
+datos la aporta el usuario; **nunca se versiona en el repo**.
 
 ## Funciones
 
@@ -57,6 +65,9 @@ cie11_map_from_icd10("A010")
 | `cie11_validate()` | Valida existencia, `classKind` y condición de hoja |
 | `cie11_map_from_icd10()` | Crosswalk CIE-10 → CIE-11 con nivel de certeza (1–5) |
 | `cie11_validate_cluster()` | Valida codificación en clúster / post-coordinación (`&`, `/`) |
+| `cie11_connect()` | Conecta a una base CIE-11 SQLite local (pooled) |
+| `cie11_sql()` | Consulta SELECT (solo lectura) sobre la base conectada |
+| `cie11_disconnect()` | Cierra la conexión |
 
 ### Regla de certeza del crosswalk (trazable)
 
