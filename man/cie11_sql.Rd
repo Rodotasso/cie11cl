@@ -13,21 +13,37 @@ cie11_sql(query)
 Un data frame con el resultado. / A data frame with the result.
 }
 \description{
-Ejecuta una consulta \strong{SELECT} (solo lectura) sobre la base CIE-11 conectada
-con \code{\link[=cie11_connect]{cie11_connect()}}. Por seguridad solo se permiten consultas SELECT: se
-bloquean palabras clave de escritura y los statements multiples.
+Ejecuta una consulta \strong{SELECT} (solo lectura) sobre un cache SQLite que el
+paquete construye automaticamente a partir de las fuentes cargadas con
+\code{\link[=cie11_load]{cie11_load()}} (o del fixture sintetico si no se ha cargado nada). El cache se
+materializa de forma perezosa en \code{tools::R_user_dir("cie11cl", "data")}, se
+versiona segun los datos cargados y se reconstruye solo si cambian. No se
+requiere ninguna conexion manual ni se aporta archivo \code{.db} alguno.
 }
 \details{
-Runs a read-only \strong{SELECT} query against the ICD-11 database connected via
-\code{\link[=cie11_connect]{cie11_connect()}}. For safety only SELECT queries are allowed: write keywords
+Tablas disponibles: \code{cie11} (linealizacion MMS), \code{cie11_map} (mapeo
+CIE-10 -> CIE-11) y \code{cie11_fts} (busqueda de texto completo FTS5 sobre
+\code{code}, \code{title}, \code{definition}, \code{indexTerms}).
+
+Runs a read-only \strong{SELECT} query against a SQLite cache the package builds
+automatically from the sources loaded via \code{\link[=cie11_load]{cie11_load()}} (or the synthetic
+fixture). The cache is materialized lazily in
+\code{tools::R_user_dir("cie11cl", "data")}, versioned by the loaded data and
+rebuilt only when it changes. No manual connection or user-supplied \code{.db}
+file is needed. For safety only SELECT queries are allowed: write keywords
 and multiple statements are rejected.
 }
 \examples{
-\dontrun{
-cie11_connect("data/cie11_mms_2026.db")
-cie11_sql("SELECT code, title FROM cie11 WHERE code = '1A00'")
+\donttest{
+cie11_load() # fixture sintetico / synthetic fixture
+cie11_sql("SELECT code, title FROM cie11 WHERE code LIKE 'AB\%'")
 }
 }
 \seealso{
-\code{\link[=cie11_connect]{cie11_connect()}}, \code{\link[=cie11_disconnect]{cie11_disconnect()}}
+\code{\link[=cie11_load]{cie11_load()}}, \code{\link[=cie11_clear_cache]{cie11_clear_cache()}}, \code{\link[=cie11_disconnect]{cie11_disconnect()}}
+
+Other sql:
+\code{\link[=cie11_clear_cache]{cie11_clear_cache()}},
+\code{\link[=cie11_disconnect]{cie11_disconnect()}}
 }
+\concept{sql}

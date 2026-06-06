@@ -46,14 +46,21 @@ cie11_load(
 cie11_search("fiebre tifoidea")
 cie11_map_from_icd10("A010")
 
-# 3) Backend SQL: consulta directa sobre una base CIE-11 SQLite local
-cie11_connect("data/cie11_mms_2026.db")              # tabla por defecto: cie11
-cie11_sql("SELECT code, title FROM cie11 WHERE code LIKE '1A%'")
-cie11_disconnect()
+# 3) Backend SQL: cache SQLite construido automáticamente desde los datos cargados
+cie11_load()  # fixture, o tus propias fuentes con cie11_load(mms=..., map=...)
+cie11_sql("SELECT code, title FROM cie11 WHERE code LIKE 'AB%'")
+cie11_sql("SELECT code FROM cie11_fts WHERE cie11_fts MATCH 'alfa'")  # FTS5
+cie11_clear_cache()
 ```
 
-El backend SQL requiere los paquetes `DBI` y `RSQLite` (opcionales). La base de
-datos la aporta el usuario; **nunca se versiona en el repo**.
+El backend SQL requiere los paquetes `DBI` y `RSQLite` (opcionales). Igual que
+en `ciecl`, el paquete **no recibe ningún archivo `.db`**: construye de forma
+perezosa un cache SQLite (atómico, versionado por los datos, con índices y
+búsqueda de texto completo FTS5) en `tools::R_user_dir("cie11cl", "data")` a
+partir de las fuentes cargadas con `cie11_load()`. Recargar otra release de
+CIE-11 invalida y reconstruye el cache automáticamente. Tablas disponibles:
+`cie11`, `cie11_map` y `cie11_fts`. Los datos clínicos **nunca se versionan en
+el repo**.
 
 ## Funciones
 
@@ -65,9 +72,9 @@ datos la aporta el usuario; **nunca se versiona en el repo**.
 | `cie11_validate()` | Valida existencia, `classKind` y condición de hoja |
 | `cie11_map_from_icd10()` | Crosswalk CIE-10 → CIE-11 con nivel de certeza (1–5) |
 | `cie11_validate_cluster()` | Valida codificación en clúster / post-coordinación (`&`, `/`) |
-| `cie11_connect()` | Conecta a una base CIE-11 SQLite local (pooled) |
-| `cie11_sql()` | Consulta SELECT (solo lectura) sobre la base conectada |
-| `cie11_disconnect()` | Cierra la conexión |
+| `cie11_sql()` | Consulta SELECT (solo lectura) sobre el cache SQLite derivado de los datos cargados |
+| `cie11_clear_cache()` | Elimina el cache SQLite para forzar su reconstrucción |
+| `cie11_disconnect()` | Cierra la conexión pooled sin borrar el cache |
 
 ### Regla de certeza del crosswalk (trazable)
 

@@ -10,13 +10,21 @@ cie11_disconnect()
 Invisiblemente \code{NULL}. / Invisibly \code{NULL}.
 }
 \description{
-Cierra la conexion pooled al archivo SQLite y libera el cache. Seguro de
-llamar aunque no haya conexion activa.
+Cierra la conexion pooled al cache SQLite y libera el lock del archivo. No
+borra el cache. Seguro de llamar aunque no haya conexion activa.
 }
 \details{
-Closes the pooled SQLite connection and clears the cache. Safe to call even
-when no connection is active.
+Closes the pooled SQLite connection and releases the file lock without
+deleting the cache. Safe to call even when no connection is active.
+}
+\examples{
+cie11_disconnect()
 }
 \seealso{
-\code{\link[=cie11_connect]{cie11_connect()}}
+\code{\link[=cie11_sql]{cie11_sql()}}, \code{\link[=cie11_clear_cache]{cie11_clear_cache()}}
+
+Other sql:
+\code{\link[=cie11_clear_cache]{cie11_clear_cache()}},
+\code{\link[=cie11_sql]{cie11_sql()}}
 }
+\concept{sql}

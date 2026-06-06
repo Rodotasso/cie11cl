@@ -1,5 +1,8 @@
-# Cache interno de las fuentes de datos CIE-11 cargadas.
+# Cache interno de las fuentes de datos CIE-11 cargadas y de la conexion SQLite
+# pooled derivada de ellas (ver sql.R). La conexion se crea lazy (al primer uso).
 .cie11_env <- new.env(parent = emptyenv())
+.cie11_env$con <- NULL
+.cie11_env$db_path <- NULL
 
 # Columnas requeridas en cada fuente.
 .cie11_mms_cols <- c(
@@ -52,6 +55,9 @@
 #' }
 #' @export
 cie11_load <- function(mms = NULL, map = NULL) {
+  # Cargar otras fuentes invalida el cache SQLite derivado: se cierra la
+  # conexion pooled para que la proxima consulta lo reconstruya (ver sql.R).
+  if (!is.null(.cie11_env$con)) cie11_disconnect()
   if (is.null(mms) && is.null(map)) {
     .cie11_env$mms <- .cie11_fixture_mms()
     .cie11_env$map <- .cie11_fixture_map()
