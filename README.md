@@ -1,92 +1,180 @@
+
+> **Language / Idioma:** **English** \| [Español](README.es.md)
+
+<!-- README.md is generated from README.Rmd. Please edit that file. -->
+
 # cie11cl
 
-Acceso determinista a la Clasificación Internacional de Enfermedades, 11.ª
-revisión (CIE-11, linealización MMS) en español, con búsqueda léxica, validación
-de códigos y *crosswalks* CIE-10 → CIE-11 con **niveles de certeza trazables**,
-orientado al sistema de salud chileno.
+**Data Science for Public Health Group** \| University of Chile
 
-Extiende la arquitectura de [`ciecl`](https://github.com/RodoTasso/ciecl)
-(capa de datos + motor de validación) al dominio CIE-11. Forma parte del
-ecosistema R de estandarización clínica.
+<!-- badges: start -->
 
-## Principio de diseño: solo código, datos en runtime
+[![License:
+MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Data: code
+only](https://img.shields.io/badge/data-code%20only-lightgrey.svg)](#design-principle-code-only-data-at-runtime)
+<!-- badges: end -->
 
-El paquete **no incluye datos de la clasificación**. La base de datos CIE-11 y la
-tabla de mapeo CIE-10 → CIE-11 las carga el usuario en tiempo de ejecución desde
-su propia copia local (sujeta a la licencia de la OMS). **Ningún dato de la
-clasificación se versiona en este repositorio.**
+**Deterministic access to the WHO International Classification of
+Diseases, 11th Revision (ICD-11, CIE-11)** in the MMS linearization,
+with code lookup, lexical search and ICD-10 → ICD-11 crosswalks carrying
+**traceable certainty levels**, oriented to the Chilean health system.
 
-Es **determinista**: el mismo input más los mismos datos de referencia versionados
-producen siempre el mismo output, con una regla trazable para cada transformación.
+It extends the architecture of
+[`ciecl`](https://github.com/RodoTasso/ciecl) (data layer + validation
+engine) to the ICD-11 domain and is part of the R ecosystem for clinical
+standardization.
 
-## Instalación
+## Purpose
 
-```r
+`cie11cl` provides reproducible tools to work with ICD-11 in health
+research and data analysis in Chile:
+
+- Exact code lookup against a loaded ICD-11 source
+- Error-tolerant lexical search (Jaro-Winkler), fully deterministic
+- ICD-10 → ICD-11 crosswalks with a fixed, traceable certainty rule
+  (1–5)
+- Structural validation of **cluster coding** / post-coordination (`&`,
+  `/`), with no dependency on the WHO server
+- Read-only SQL over an auto-built SQLite cache (indices + FTS5)
+
+## Design principle: code only, data at runtime
+
+The package **ships no classification data**. The ICD-11 database and
+the ICD-10 → ICD-11 mapping table are loaded by the user at runtime from
+their own local copy (subject to the WHO licence). **No classification
+data is versioned in this repository.**
+
+It is **deterministic**: the same input plus the same versioned
+reference data always yields the same output, with a traceable rule for
+every transformation.
+
+## Installation
+
+``` r
 # install.packages("pak")
 pak::pak("RodoTasso/cie11cl")
+
+# Alternative with devtools
+# devtools::install_github("RodoTasso/cie11cl")
+
+# SQL backend (optional): DBI + RSQLite
+install.packages(c("DBI", "RSQLite"))
 ```
 
-## Uso
+## Quick start
 
-```r
+All examples below run on the bundled **synthetic fixture** (made-up
+codes such as `AA00`, `AB00.0`, `XA01`), so they work without any
+external data.
+
+``` r
 library(cie11cl)
 
-# 1) Demostración sin datos externos (fixture sintético):
+# Load the synthetic fixture (no external data required)
 cie11_load()
-cie11_search("ejemplo alfa")
-cie11_lookup("XA00")
-cie11_map_from_icd10("A000")
-cie11_validate_cluster("AB00.0&XA01")  # post-coordinación (stem & eje)
 
-# 2) Con tu propia base de datos CIE-11 (exportada a CSV, nunca al repo):
+# Exact lookup by code
+cie11_lookup("AA00")
+cie11_lookup(c("AA00", "ZZ99"))   # unknown codes return a row of NAs
+
+# Deterministic fuzzy search (Jaro-Winkler) over titles / index terms
+cie11_search("ejemplo alfa")
+
+# Validate existence, classKind and leaf status
+cie11_validate(c("AA00", "ZZ99"))
+
+# ICD-10 -> ICD-11 crosswalk with traceable certainty (1-5)
+cie11_map_from_icd10("A000")
+
+# Cluster coding / post-coordination (stem & axis, stems joined by /)
+cie11_validate_cluster(c("AB00.0&XA01", "AA00&XA01", "AB00/AC00", "XA01"))
+```
+
+### Using your own ICD-11 release
+
+Export your local ICD-11 database and ICD-10 → ICD-11 mapping to UTF-8
+CSV (**never committed to the repo**) and load them:
+
+``` r
 cie11_load(
   mms = "data/cie11_mms_2026_full.csv",
   map = "data/mapeo_cie10_cie11_completo.csv"
 )
+
 cie11_search("fiebre tifoidea")
 cie11_map_from_icd10("A010")
-
-# 3) Backend SQL: cache SQLite construido automáticamente desde los datos cargados
-cie11_load()  # fixture, o tus propias fuentes con cie11_load(mms=..., map=...)
-cie11_sql("SELECT code, title FROM cie11 WHERE code LIKE 'AB%'")
-cie11_sql("SELECT code FROM cie11_fts WHERE cie11_fts MATCH 'alfa'")  # FTS5
-cie11_clear_cache()
 ```
 
-El backend SQL requiere los paquetes `DBI` y `RSQLite` (opcionales). Igual que
-en `ciecl`, el paquete **no recibe ningún archivo `.db`**: construye de forma
-perezosa un cache SQLite (atómico, versionado por los datos, con índices y
-búsqueda de texto completo FTS5) en `tools::R_user_dir("cie11cl", "data")` a
-partir de las fuentes cargadas con `cie11_load()`. Recargar otra release de
-CIE-11 invalida y reconstruye el cache automáticamente. Tablas disponibles:
-`cie11`, `cie11_map` y `cie11_fts`. Los datos clínicos **nunca se versionan en
-el repo**.
+The MMS source requires columns `code`, `title`, `definition`,
+`classKind`, `isLeaf`, `parent`, `indexTerms`, `postcoordinationScale`;
+the mapping table requires `cie10_code`, `cie10_desc`, `cie11_code`,
+`cie11_title`, `match_type`, `score`.
 
-## Funciones
+### SQL backend (optional)
 
-| Función | Propósito |
-|---|---|
-| `cie11_load()` | Carga las fuentes CIE-11 (data frame o CSV) en runtime |
-| `cie11_lookup()` | Búsqueda exacta de entidades por código |
-| `cie11_search()` | Búsqueda léxica difusa (Jaro-Winkler) por título / términos |
-| `cie11_validate()` | Valida existencia, `classKind` y condición de hoja |
-| `cie11_map_from_icd10()` | Crosswalk CIE-10 → CIE-11 con nivel de certeza (1–5) |
-| `cie11_validate_cluster()` | Valida codificación en clúster / post-coordinación (`&`, `/`) |
-| `cie11_sql()` | Consulta SELECT (solo lectura) sobre el cache SQLite derivado de los datos cargados |
-| `cie11_clear_cache()` | Elimina el cache SQLite para forzar su reconstrucción |
-| `cie11_disconnect()` | Cierra la conexión pooled sin borrar el cache |
+Mirroring `ciecl`, the package **receives no `.db` file**: it lazily
+builds a SQLite cache (atomic, versioned by the loaded data, with
+indices and FTS5 full-text search) under
+`tools::R_user_dir("cie11cl", "data")` from the sources loaded with
+`cie11_load()`. Reloading another ICD-11 release invalidates and
+rebuilds the cache automatically.
 
-### Regla de certeza del crosswalk (trazable)
+``` r
+cie11_load()  # fixture, or your own sources via cie11_load(mms = ..., map = ...)
 
-| `match_type` / `score` | Certeza |
-|---|---|
-| `EXACT_TITLE` | 5 |
-| `FUZZY_JW`, score ≥ 0.95 | 4 |
-| `FUZZY_JW`, 0.88 ≤ score < 0.95 | 3 |
-| `FUZZY_JW`, 0.80 ≤ score < 0.88 | 2 |
-| resto | 1 |
+# Read-only SELECT over the derived cache
+cie11_sql("SELECT code, title FROM cie11 WHERE code LIKE 'AB%'")
 
-## Licencia
+# Full-text search (FTS5)
+cie11_sql("SELECT code FROM cie11_fts WHERE cie11_fts MATCH 'alfa'")
 
-MIT (código). Los datos CIE-11 son propiedad de la OMS y se rigen por su licencia;
-no se distribuyen con este paquete.
+cie11_clear_cache()  # force a rebuild on the next query
+```
+
+Available tables: `cie11`, `cie11_map` and `cie11_fts`. Only `SELECT`
+queries are allowed (write keywords and multiple statements are
+rejected).
+
+## Functions
+
+| Function | Purpose |
+|----|----|
+| `cie11_load()` | Load the ICD-11 sources (data frame or CSV) at runtime |
+| `cie11_lookup()` | Exact entity lookup by code |
+| `cie11_search()` | Deterministic fuzzy lexical search (Jaro-Winkler) |
+| `cie11_validate()` | Validate existence, `classKind` and leaf status |
+| `cie11_map_from_icd10()` | ICD-10 → ICD-11 crosswalk with certainty level (1–5) |
+| `cie11_validate_cluster()` | Validate cluster coding / post-coordination (`&`, `/`) |
+| `cie11_sql()` | Read-only SELECT over the derived SQLite cache |
+| `cie11_clear_cache()` | Delete the SQLite cache to force a rebuild |
+| `cie11_disconnect()` | Close the pooled connection without deleting the cache |
+
+### Crosswalk certainty rule (traceable)
+
+| `match_type` / `score`           | Certainty |
+|----------------------------------|-----------|
+| `EXACT_TITLE`                    | 5         |
+| `FUZZY_JW`, score ≥ 0.95         | 4         |
+| `FUZZY_JW`, 0.88 ≤ score \< 0.95 | 3         |
+| `FUZZY_JW`, 0.80 ≤ score \< 0.88 | 2         |
+| otherwise                        | 1         |
+
+## License
+
+MIT (package code). ICD-11 data is property of the WHO and governed by
+its licence; it is **not** distributed with this package.
+
+## Author
+
+**Rodolfo Tasso Suazo** \| <rtasso@uchile.cl>
+
+**Data Science for Public Health Group**<br> School of Public Health,
+Faculty of Medicine<br> University of Chile
+
+## Links
+
+- **Repository**: <https://github.com/RodoTasso/cie11cl>
+- **Report issues**: <https://github.com/RodoTasso/cie11cl/issues>
+- **Sibling package (ICD-10)**: <https://github.com/RodoTasso/ciecl>
+- **WHO ICD-11**: <https://icd.who.int>
