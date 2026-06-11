@@ -1,76 +1,68 @@
-# Cache interno de las fuentes de datos CIE-11 cargadas y de la conexion SQLite
-# pooled derivada de ellas (ver sql.R). La conexion se crea lazy (al primer uso).
+# Cache interno de la conexion SQLite pooled derivada del dataset embebido
+# (o de datos de usuario, si se cargaron con cie11_load()).
 .cie11_env <- new.env(parent = emptyenv())
-.cie11_env$con <- NULL
-.cie11_env$db_path <- NULL
+.cie11_env$con          <- NULL
+.cie11_env$db_path      <- NULL
+.cie11_env$mms          <- NULL   # NULL => usar cie11_mms embebido
+.cie11_env$mms_embedded <- NULL   # cache del dataset embebido (cargado lazy)
+.cie11_env$map          <- NULL   # NULL => sin crosswalk (tabla vacia en SQLite)
 
-# Columnas requeridas en cada fuente.
+# Columnas requeridas cuando el usuario aporta sus propios datos con cie11_load().
+# El dataset embebido cie11_mms ya garantiza estas columnas.
 .cie11_mms_cols <- c(
-  "code", "title", "definition", "classKind",
-  "isLeaf", "parent", "indexTerms", "postcoordinationScale"
+  "uri_id", "code", "title", "definition", "classKind",
+  "isLeaf", "parent_id", "chapter", "level",
+  "indexTerms", "postcoordinationScale"
 )
 .cie11_map_cols <- c(
   "cie10_code", "cie10_desc", "cie11_code",
   "cie11_title", "match_type", "score"
 )
 
-#' Cargar las fuentes de datos CIE-11 / Load ICD-11 data sources
+#' Cargar fuentes de datos CIE-11 personalizadas / Load custom ICD-11 data
 #'
-#' Carga la tabla MMS de CIE-11 y la tabla de mapeo CIE-10 -> CIE-11 en el cache
-#' interno del paquete. El paquete distribuye **solo codigo**: el usuario aporta
-#' su propia release de CIE-11 y su tabla de mapeo, ya sea como data frames en
-#' memoria o como rutas a archivos CSV exportados desde su base de datos local.
-#' Ningun dato de la clasificacion viene incluido en el paquete.
+#' Por defecto el paquete usa el dataset embebido `cie11_mms` (WHO MMS 2026,
+#' 37.212 entidades en espanol). Llama a esta funcion solo si necesitas usar
+#' una release diferente o un crosswalk CIE-10->CIE-11 propio.
 #'
-#' Llamada sin argumentos, carga un pequeno fixture sintetico (codigos
-#' inventados, no contenido real de la OMS) para que ejemplos y tests puedan
-#' ejecutarse sin datos externos.
+#' By default the package uses the bundled `cie11_mms` dataset (WHO MMS 2026,
+#' 37,212 entities in Spanish). Call this function only to override with a
+#' different release or your own ICD-10->ICD-11 crosswalk.
 #'
-#' Loads the ICD-11 MMS table and the ICD-10 to ICD-11 mapping table into the
-#' package's internal cache. The package ships code only: users supply their own
-#' ICD-11 release and mapping table, as data frames or as paths to CSV files. No
-#' classification data is bundled. Called with no arguments, a small synthetic
-#' fixture is loaded so examples and tests can run without external data.
-#'
-#' @param mms Data frame, o ruta a un CSV UTF-8, con la linealizacion MMS de
-#'   CIE-11. Columnas requeridas: `code`, `title`, `definition`, `classKind`,
-#'   `isLeaf`, `parent`, `indexTerms`, `postcoordinationScale`. /
-#'   A data frame or path to a UTF-8 CSV with the ICD-11 MMS linearization.
-#' @param map Data frame, o ruta a un CSV UTF-8, con el mapeo CIE-10 -> CIE-11.
+#' @param mms Data frame o ruta CSV con la linealizacion MMS de CIE-11.
+#'   Columnas requeridas: `uri_id`, `code`, `title`, `definition`,
+#'   `classKind`, `isLeaf`, `parent_id`, `chapter`, `level`,
+#'   `indexTerms`, `postcoordinationScale`. Pasa `NULL` para volver al
+#'   dataset embebido. /
+#'   Data frame or CSV path with ICD-11 MMS linearization. Pass `NULL`
+#'   to revert to the bundled dataset.
+#' @param map Data frame o ruta CSV con el mapeo CIE-10->CIE-11.
 #'   Columnas requeridas: `cie10_code`, `cie10_desc`, `cie11_code`,
 #'   `cie11_title`, `match_type`, `score`. /
-#'   A data frame or path to a UTF-8 CSV with the ICD-10 to ICD-11 mapping.
+#'   Data frame or CSV path with ICD-10 to ICD-11 mapping.
 #' @return Invisiblemente `TRUE`. / Invisibly `TRUE`.
 #' @examples
-#' # Fixture sintetico (sin datos externos) / synthetic fixture:
+#' # Volver al dataset embebido / revert to bundled dataset:
 #' cie11_load()
 #'
 #' \dontrun{
-#' # Tu propia base de datos CIE-11, exportada a CSV (nunca al repo) /
-#' # your own local ICD-11 database exported to CSV:
-#' cie11_load(
-#'   mms = "data/cie11_mms_2026_full.csv",
-#'   map = "data/mapeo_cie10_cie11_completo.csv"
-#' )
+#' # Release personalizada exportada a CSV / custom release exported to CSV:
+#' cie11_load(mms = "mi_release_cie11.csv")
 #' }
 #' @export
 cie11_load <- function(mms = NULL, map = NULL) {
-  # Cargar otras fuentes invalida el cache SQLite derivado: se cierra la
-  # conexion pooled para que la proxima consulta lo reconstruya (ver sql.R).
   if (!is.null(.cie11_env$con)) cie11_disconnect()
   if (is.null(mms) && is.null(map)) {
-    .cie11_env$mms <- .cie11_fixture_mms()
-    .cie11_env$map <- .cie11_fixture_map()
-    .cie11_env$source <- "fixture"
+    .cie11_env$mms <- NULL
+    .cie11_env$map <- NULL
     return(invisible(TRUE))
   }
   if (!is.null(mms)) .cie11_env$mms <- .cie11_read(mms, .cie11_mms_cols)
   if (!is.null(map)) .cie11_env$map <- .cie11_read(map, .cie11_map_cols)
-  .cie11_env$source <- "user"
   invisible(TRUE)
 }
 
-# Lee una fuente desde un data frame o una ruta CSV, validando columnas.
+# Lee un data frame o CSV validando columnas requeridas.
 .cie11_read <- function(x, required) {
   if (is.character(x) && length(x) == 1L) {
     if (!file.exists(x)) stop("File not found: ", x, call. = FALSE)
@@ -82,9 +74,7 @@ cie11_load <- function(mms = NULL, map = NULL) {
     )
   }
   if (!is.data.frame(x)) {
-    stop("`mms`/`map` must be a data frame or a path to a CSV file.",
-      call. = FALSE
-    )
+    stop("`mms`/`map` must be a data frame or a CSV file path.", call. = FALSE)
   }
   faltantes <- setdiff(required, names(x))
   if (length(faltantes)) {
@@ -95,13 +85,25 @@ cie11_load <- function(mms = NULL, map = NULL) {
   x
 }
 
-# Getters: cargan el fixture sintetico de forma perezosa si aun no hay datos.
+# Retorna la tabla MMS activa: dataset embebido (cargado una vez) o datos del usuario.
 .cie11_mms <- function() {
-  if (is.null(.cie11_env$mms)) cie11_load()
-  .cie11_env$mms
+  if (!is.null(.cie11_env$mms)) return(.cie11_env$mms)
+  if (!is.null(.cie11_env$mms_embedded)) return(.cie11_env$mms_embedded)
+  e <- new.env(parent = emptyenv())
+  utils::data("cie11_mms", envir = e, package = "cie11cl")
+  .cie11_env$mms_embedded <- e$cie11_mms
+  .cie11_env$mms_embedded
 }
 
+# Retorna la tabla de mapeo activa (data frame vacio si no se cargo ninguna).
 .cie11_map <- function() {
-  if (is.null(.cie11_env$map)) cie11_load()
+  if (is.null(.cie11_env$map)) {
+    return(data.frame(
+      cie10_code = character(), cie10_desc = character(),
+      cie11_code = character(), cie11_title = character(),
+      match_type = character(), score = numeric(),
+      stringsAsFactors = FALSE
+    ))
+  }
   .cie11_env$map
 }

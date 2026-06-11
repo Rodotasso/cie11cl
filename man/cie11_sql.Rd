@@ -34,7 +34,7 @@ file is needed. For safety only SELECT queries are allowed: write keywords
 and multiple statements are rejected.
 }
 \examples{
-\donttest{
+\dontrun{
 cie11_load() # fixture sintetico / synthetic fixture
 cie11_sql("SELECT code, title FROM cie11 WHERE code LIKE 'AB\%'")
 }

@@ -86,7 +86,44 @@ cie11_validate_cluster <- function(cluster) {
       }
     }
   }
+
+  # 4) validacion SQL de ejes: cada codigo de extension debe estar en el
+  #    postcoord_scale del stem (determinista, requiere cache SQLite).
+  sql_result <- .cie11_validar_cluster_axes_sql(cl_orig, grupos, comps)
+  if (!is.null(sql_result)) return(sql_result)
+
   .cie11_cluster_row(cl_orig, TRUE, length(comps), NA_character_)
+}
+
+# Valida ejes de post-coordinacion contra la tabla cie11_postcoord_scale
+# en el cache SQLite. Devuelve una fila de error o NULL si todo es valido
+# (o si el cache no tiene la tabla, permitiendo degradacion graceful).
+.cie11_validar_cluster_axes_sql <- function(cl_orig, grupos, comps) {
+  con <- tryCatch(.cie11_get_db(), error = function(e) NULL)
+  if (is.null(con)) return(NULL)
+  if (!DBI::dbExistsTable(con, "cie11_postcoord_scale")) return(NULL)
+
+  for (g in grupos) {
+    partes <- trimws(strsplit(g, "&", fixed = TRUE)[[1]])
+    if (length(partes) <= 1L) next
+    stem <- partes[1]
+    for (ext_code in partes[-1]) {
+      res <- DBI::dbGetQuery(con, "
+        SELECT EXISTS(
+          SELECT 1 FROM cie11_postcoord_scale pcs
+          WHERE pcs.code = ?
+            AND pcs.entity_id = (SELECT uri_id FROM cie11 WHERE code = ? LIMIT 1)
+        ) AS es_valido
+      ", params = list(stem, ext_code))
+      if (!isTRUE(res$es_valido == 1L)) {
+        return(.cie11_cluster_row(
+          cl_orig, FALSE, length(comps),
+          paste0("'", ext_code, "' no es eje valido de post-coordinacion para '", stem, "'")
+        ))
+      }
+    }
+  }
+  NULL
 }
 
 # Construye una fila de resultado de validacion de cluster.

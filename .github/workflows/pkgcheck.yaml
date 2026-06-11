@@ -1,0 +1,55 @@
+# Workflow para pkgcheck de rOpenSci.
+# Corre los chequeos estadisticos/comunitarios que rOpenSci aplica
+# durante la revision Software Peer Review.
+# Documentacion: https://github.com/ropensci-review-tools/pkgcheck-action
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+
+name: pkgcheck.yaml
+
+permissions: read-all
+
+jobs:
+  pkgcheck:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # Espera a que R-CMD-check y test-coverage completen antes de correr pkgcheck,
+      # ya que pkgcheck consulta el estado de esos workflows via API.
+      - name: Esperar a R-CMD-check y test-coverage
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          targets="R-CMD-check.yaml test-coverage"
+          end=$((SECONDS+1500))
+          discover=$((SECONDS+180))
+          while true; do
+            json=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs?head_sha=${GITHUB_SHA}&per_page=100" 2>/dev/null)
+            pending=""; anyseen=0
+            for t in $targets; do
+              row=$(printf '%s' "$json" | jq -r --arg n "$t" 'first(.workflow_runs[] | select(.name==$n)) | "\(.status // "none") \(.conclusion // "none")"' 2>/dev/null)
+              [ -z "$row" ] && row="none none"
+              status=${row%% *}; concl=${row##* }
+              if [ "$status" = "none" ]; then pending="$pending $t(sin-run)"; continue; fi
+              anyseen=1
+              if [ "$status" != "completed" ]; then
+                pending="$pending $t($status)"
+              elif [ "$concl" != "success" ]; then
+                echo "::error::$t concluyo en '$concl'; pkgcheck fallaria igual."; exit 1
+              fi
+            done
+            if [ -z "$pending" ]; then echo "OK: R-CMD-check y test-coverage en success."; break; fi
+            if [ "$anyseen" = 0 ] && [ "$SECONDS" -gt "$discover" ]; then echo "Aviso: sin runs target para este SHA; continuo."; break; fi
+            if [ "$SECONDS" -gt "$end" ]; then echo "Aviso: timeout esperando; continuo y dejo que pkgcheck evalue."; break; fi
+            echo "Esperando:$pending"; sleep 15
+          done
+
+      - uses: ropensci-review-tools/pkgcheck-action@main
+        with:
+          post-to-issue: false
+          summary-only: true

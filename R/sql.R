@@ -29,13 +29,11 @@
 .cie11_data_signature <- function() {
   mms <- .cie11_mms()
   map <- .cie11_map()
-  source <- if (is.null(.cie11_env$source)) "unknown" else .cie11_env$source
   paste(
-    source,
     nrow(mms), ncol(mms),
-    nrow(map), ncol(map),
+    nrow(map),
     as.integer(sum(nchar(mms$code))),
-    as.integer(sum(nchar(map$cie11_code))),
+    as.integer(sum(nchar(mms$uri_id))),
     sep = "|"
   )
 }
@@ -52,6 +50,88 @@
   invisible(TRUE)
 }
 
+# Construye las tablas de post-coordinacion desde el JSON embebido.
+# Requiere jsonlite (Suggests). Si no esta disponible, omite silenciosamente.
+.cie11_build_postcoord <- function(con, mms) {
+  if (!requireNamespace("jsonlite", quietly = TRUE)) {
+    if (interactive()) {
+      message("Instalar jsonlite para validacion completa de clusters: ",
+              "install.packages('jsonlite')")
+    }
+    return(invisible(FALSE))
+  }
+
+  pc_rows <- which(nzchar(mms$postcoordinationScale))
+  if (length(pc_rows) == 0L) return(invisible(FALSE))
+
+  axes_list  <- vector("list", length(pc_rows))
+  scale_list <- vector("list", length(pc_rows))
+
+  for (k in seq_along(pc_rows)) {
+    i      <- pc_rows[k]
+    code_i <- mms$code[i]
+    json_i <- mms$postcoordinationScale[i]
+
+    axes <- tryCatch(
+      jsonlite::fromJSON(json_i, simplifyVector = FALSE),
+      error = function(e) NULL
+    )
+    if (is.null(axes)) next
+
+    a_rows <- vector("list", length(axes))
+    s_rows <- vector("list", length(axes))
+
+    for (j in seq_along(axes)) {
+      ax      <- axes[[j]]
+      ax_name <- basename(ax$axisName)
+      req     <- identical(ax$required, "true")
+      allow   <- if (is.null(ax$allowMultiple)) NA_character_ else ax$allowMultiple
+
+      a_rows[[j]] <- data.frame(
+        code         = code_i,
+        axis_name    = ax_name,
+        required     = as.integer(req),
+        allow_multiple = allow,
+        stringsAsFactors = FALSE
+      )
+
+      entities <- ax$scaleEntity
+      if (length(entities) > 0L) {
+        entity_ids <- vapply(entities, function(e) {
+          m <- regmatches(e, regexpr("(?<=mms/)(.+)$", e, perl = TRUE))
+          if (length(m) == 0L) NA_character_ else m[[1]]
+        }, character(1))
+        entity_ids <- entity_ids[!is.na(entity_ids)]
+        if (length(entity_ids) > 0L) {
+          s_rows[[j]] <- data.frame(
+            code       = code_i,
+            axis_name  = ax_name,
+            entity_id  = entity_ids,
+            stringsAsFactors = FALSE
+          )
+        }
+      }
+    }
+    axes_list[[k]]  <- do.call(rbind, a_rows)
+    scale_list[[k]] <- do.call(rbind, s_rows)
+  }
+
+  axes_df  <- do.call(rbind, axes_list)
+  scale_df <- do.call(rbind, scale_list)
+
+  if (!is.null(axes_df) && nrow(axes_df) > 0L) {
+    DBI::dbWriteTable(con, "cie11_postcoord_axes", axes_df, overwrite = TRUE)
+    DBI::dbExecute(con,
+      "CREATE INDEX IF NOT EXISTS idx_pc_axes_code ON cie11_postcoord_axes(code)")
+  }
+  if (!is.null(scale_df) && nrow(scale_df) > 0L) {
+    DBI::dbWriteTable(con, "cie11_postcoord_scale", scale_df, overwrite = TRUE)
+    DBI::dbExecute(con,
+      "CREATE INDEX IF NOT EXISTS idx_pc_scale ON cie11_postcoord_scale(code, axis_name)")
+  }
+  invisible(TRUE)
+}
+
 # Construye el cache SQLite atomicamente: escribe en un .tmp y renombra al final.
 # Si falla en cualquier punto no queda un cache parcial.
 .cie11_build_cache_atomic <- function(cache_dir, db_path) {
@@ -65,18 +145,27 @@
   if (file.exists(tmp_path)) file.remove(tmp_path)
 
   con <- DBI::dbConnect(RSQLite::SQLite(), tmp_path)
+  disconnected <- FALSE
   on.exit({
-    if (DBI::dbIsValid(con)) DBI::dbDisconnect(con)
+    if (!disconnected && DBI::dbIsValid(con)) DBI::dbDisconnect(con)
   }, add = TRUE)
 
   tryCatch({
-    DBI::dbWriteTable(con, "cie11", mms, overwrite = TRUE)
-    DBI::dbWriteTable(con, "cie11_map", map, overwrite = TRUE)
+    DBI::dbWriteTable(con, "cie11",     as.data.frame(mms), overwrite = TRUE)
+    DBI::dbWriteTable(con, "cie11_map", as.data.frame(map), overwrite = TRUE)
 
-    # Indices.
-    DBI::dbExecute(con, "CREATE INDEX idx_cie11_code ON cie11(code)")
-    DBI::dbExecute(con, "CREATE INDEX idx_map_cie10 ON cie11_map(cie10_code)")
-    DBI::dbExecute(con, "CREATE INDEX idx_map_cie11 ON cie11_map(cie11_code)")
+    # Indices principales.
+    DBI::dbExecute(con, "CREATE INDEX idx_cie11_code      ON cie11(code)")
+    DBI::dbExecute(con, "CREATE INDEX idx_cie11_uri_id    ON cie11(uri_id)")
+    DBI::dbExecute(con, "CREATE INDEX idx_cie11_parent_id ON cie11(parent_id)")
+    DBI::dbExecute(con, "CREATE INDEX idx_cie11_chapter   ON cie11(chapter)")
+    if (nrow(map) > 0L) {
+      DBI::dbExecute(con, "CREATE INDEX idx_map_cie10 ON cie11_map(cie10_code)")
+      DBI::dbExecute(con, "CREATE INDEX idx_map_cie11 ON cie11_map(cie11_code)")
+    }
+
+    # Tablas de post-coordinacion (para navegacion y validacion de clusters).
+    .cie11_build_postcoord(con, mms)
 
     # Busqueda de texto completo.
     .cie11_build_fts(con)
@@ -95,14 +184,15 @@
       params = list(signature)
     )
 
-    DBI::dbDisconnect(con)
+    DBI::dbDisconnect(con); disconnected <- TRUE
 
     # Atomico: renombrar .tmp -> .db
     if (file.exists(db_path)) file.remove(db_path)
     file.rename(tmp_path, db_path)
     if (interactive()) message("ICD-11 SQLite cache built: ", db_path)
   }, error = function(e) {
-    if (DBI::dbIsValid(con)) DBI::dbDisconnect(con)
+    if (!disconnected && DBI::dbIsValid(con)) DBI::dbDisconnect(con)
+    disconnected <<- TRUE
     if (file.exists(tmp_path)) file.remove(tmp_path)
     stop("Error building ICD-11 SQLite cache: ",
       conditionMessage(e), call. = FALSE)
@@ -202,7 +292,7 @@
 #' @family sql
 #' @seealso [cie11_load()], [cie11_clear_cache()], [cie11_disconnect()]
 #' @examples
-#' \donttest{
+#' \dontrun{
 #' cie11_load() # fixture sintetico / synthetic fixture
 #' cie11_sql("SELECT code, title FROM cie11 WHERE code LIKE 'AB%'")
 #' }
@@ -251,7 +341,7 @@ cie11_sql <- function(query) {
 #' @examples
 #' # Ubicacion del cache / cache location:
 #' tools::R_user_dir("cie11cl", "data")
-#' \donttest{
+#' \dontrun{
 #' cie11_clear_cache()
 #' }
 #' @export

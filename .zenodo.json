@@ -1,0 +1,54 @@
+{
+  "title": "cie11cl: ICD-11 (CIE-11) Access and ICD-10 to ICD-11 Crosswalks for Chile",
+  "description": "Paquete R para acceso determinista a la Clasificacion Internacional de Enfermedades 11.a revision (CIE-11, linealizacion MMS) en espanol. Incluye busqueda exacta por codigo, busqueda lexical tolerante a errores (Jaro-Winkler), navegacion jerarquica, validacion de codificacion en cluster (post-coordinacion), crosswalks CIE-10 a CIE-11 con niveles de certeza trazables, y acceso SQL sobre cache SQLite derivada con FTS5. Desarrollado por el Grupo de Ciencia de Datos para Salud Publica (CDSP), Universidad de Chile.",
+  "creators": [
+    {
+      "name": "Tasso Suazo, Rodolfo",
+      "affiliation": "Universidad de Chile",
+      "orcid": "0000-0002-1264-4933"
+    }
+  ],
+  "keywords": [
+    "CIE-11",
+    "ICD-11",
+    "CIE-10",
+    "ICD-10",
+    "Chile",
+    "crosswalk",
+    "interoperabilidad",
+    "salud publica",
+    "epidemiologia",
+    "MINSAL",
+    "DEIS",
+    "R",
+    "codigos diagnosticos",
+    "MMS"
+  ],
+  "license": "MIT",
+  "upload_type": "software",
+  "programming_language": "R",
+  "version": "0.1.0",
+  "language": "spa",
+  "access_right": "open",
+  "related_identifiers": [
+    {
+      "relation": "isSupplementTo",
+      "identifier": "https://github.com/RodoTasso/cie11cl",
+      "scheme": "url"
+    },
+    {
+      "relation": "isDerivedFrom",
+      "identifier": "https://github.com/RodoTasso/ciecl",
+      "scheme": "url"
+    },
+    {
+      "relation": "references",
+      "identifier": "https://icd.who.int/",
+      "scheme": "url"
+    }
+  ],
+  "references": [
+    "OMS CIE-11: https://icd.who.int/",
+    "ciecl (paquete hermano ICD-10): https://github.com/RodoTasso/ciecl"
+  ]
+}

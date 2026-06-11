@@ -20,7 +20,7 @@ the next query. Safe to call even if it does not exist.
 \examples{
 # Ubicacion del cache / cache location:
 tools::R_user_dir("cie11cl", "data")
-\donttest{
+\dontrun{
 cie11_clear_cache()
 }
 }

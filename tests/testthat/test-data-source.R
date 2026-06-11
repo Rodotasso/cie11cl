@@ -1,4 +1,4 @@
-test_that("cie11_load() con fixture deja datos disponibles", {
+test_that("cie11_load() sin args deja el dataset embebido disponible", {
   expect_true(cie11_load())
   mms <- cie11cl:::.cie11_mms()
   map <- cie11cl:::.cie11_map()

@@ -1,0 +1,139 @@
+{
+  "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+  "@type": "SoftwareSourceCode",
+  "identifier": "cie11cl",
+  "description": "Deterministic access to the World Health Organization International Classification of Diseases, 11th Revision ('ICD-11', 'CIE-11', 'MMS' linearization) in Spanish. Includes exact code lookup, error-tolerant lexical search ('Jaro-Winkler'), hierarchical navigation, cluster coding validation (post-coordination), 'ICD-10' to 'ICD-11' crosswalks with traceable certainty levels (1-5), and read-only 'SQL' over a derived 'SQLite' cache with 'FTS5'. Classification data is not bundled; users supply their own source at runtime.",
+  "name": "cie11cl: ICD-11 (CIE-11) Access and ICD-10 to ICD-11 Crosswalks for Chile",
+  "codeRepository": "https://github.com/RodoTasso/cie11cl",
+  "issueTracker": "https://github.com/RodoTasso/cie11cl/issues",
+  "license": "https://spdx.org/licenses/MIT",
+  "version": "0.1.0",
+  "programmingLanguage": {
+    "@type": "ComputerLanguage",
+    "name": "R",
+    "url": "https://r-project.org"
+  },
+  "runtimePlatform": "R version 4.6.0",
+  "author": [
+    {
+      "@type": "Person",
+      "givenName": "Rodolfo",
+      "familyName": "Tasso Suazo",
+      "email": "rtasso@uchile.cl",
+      "@id": "https://orcid.org/0000-0002-1264-4933"
+    }
+  ],
+  "maintainer": [
+    {
+      "@type": "Person",
+      "givenName": "Rodolfo",
+      "familyName": "Tasso Suazo",
+      "email": "rtasso@uchile.cl",
+      "@id": "https://orcid.org/0000-0002-1264-4933"
+    }
+  ],
+  "softwareSuggestions": [
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "DBI",
+      "name": "DBI",
+      "version": ">= 1.1.0",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=DBI"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "RSQLite",
+      "name": "RSQLite",
+      "version": ">= 2.2.0",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=RSQLite"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "jsonlite",
+      "name": "jsonlite",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=jsonlite"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "testthat",
+      "name": "testthat",
+      "version": ">= 3.0.0",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=testthat"
+    }
+  ],
+  "softwareRequirements": {
+    "1": {
+      "@type": "SoftwareApplication",
+      "identifier": "R",
+      "name": "R",
+      "version": ">= 4.0"
+    },
+    "2": {
+      "@type": "SoftwareApplication",
+      "identifier": "stringdist",
+      "name": "stringdist",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=stringdist"
+    },
+    "3": {
+      "@type": "SoftwareApplication",
+      "identifier": "utils",
+      "name": "utils"
+    },
+    "SystemRequirements": null
+  },
+  "citation": [
+    {
+      "@type": "SoftwareSourceCode",
+      "datePublished": "2026",
+      "author": [
+        {
+          "@type": "Person",
+          "givenName": "Rodolfo",
+          "familyName": "Tasso Suazo",
+          "email": "rtasso@uchile.cl",
+          "@id": "https://orcid.org/0000-0002-1264-4933"
+        }
+      ],
+      "name": "cie11cl: ICD-11 (CIE-11) Access and ICD-10 to ICD-11 Crosswalks for Chile",
+      "url": "https://github.com/RodoTasso/cie11cl",
+      "description": "R package version 0.1.0. Grupo de Ciencia de Datos para Salud Publica, Escuela de Salud Publica, U. de Chile."
+    }
+  ],
+  "releaseNotes": "https://github.com/RodoTasso/cie11cl/blob/main/NEWS.md",
+  "readme": "https://github.com/RodoTasso/cie11cl/blob/main/README.md",
+  "contIntegration": [
+    "https://github.com/RodoTasso/cie11cl/actions/workflows/R-CMD-check.yaml",
+    "https://github.com/RodoTasso/cie11cl/actions/workflows/test-coverage.yaml"
+  ],
+  "developmentStatus": "https://lifecycle.r-lib.org/articles/stages.html#experimental"
+}

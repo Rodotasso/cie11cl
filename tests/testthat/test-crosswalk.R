@@ -1,5 +1,5 @@
 test_that("cie11_map_from_icd10() mapea y asigna certeza exacta", {
-  cie11_load()
+  cie11_load(mms = .cie11_fixture_mms(), map = .cie11_fixture_map())
   res <- cie11_map_from_icd10("A000")
   expect_equal(res$cie11_code, "AA00")
   expect_equal(res$certainty, 5L)
@@ -20,6 +20,6 @@ test_that("la certeza es vectorizada", {
 })
 
 test_that("codigos sin mapeo retornan cero filas", {
-  cie11_load()
+  cie11_load(mms = .cie11_fixture_mms(), map = .cie11_fixture_map())
   expect_equal(nrow(cie11_map_from_icd10("ZZZ")), 0L)
 })

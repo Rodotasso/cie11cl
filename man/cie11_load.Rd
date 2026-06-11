@@ -2,52 +2,43 @@
 % Please edit documentation in R/data-source.R
 \name{cie11_load}
 \alias{cie11_load}
-\title{Cargar las fuentes de datos CIE-11 / Load ICD-11 data sources}
+\title{Cargar fuentes de datos CIE-11 personalizadas / Load custom ICD-11 data}
 \usage{
 cie11_load(mms = NULL, map = NULL)
 }
 \arguments{
-\item{mms}{Data frame, o ruta a un CSV UTF-8, con la linealizacion MMS de
-CIE-11. Columnas requeridas: \code{code}, \code{title}, \code{definition}, \code{classKind},
-\code{isLeaf}, \code{parent}, \code{indexTerms}, \code{postcoordinationScale}. /
-A data frame or path to a UTF-8 CSV with the ICD-11 MMS linearization.}
+\item{mms}{Data frame o ruta CSV con la linealizacion MMS de CIE-11.
+Columnas requeridas: \code{uri_id}, \code{code}, \code{title}, \code{definition},
+\code{classKind}, \code{isLeaf}, \code{parent_id}, \code{chapter}, \code{level},
+\code{indexTerms}, \code{postcoordinationScale}. Pasa \code{NULL} para volver al
+dataset embebido. /
+Data frame or CSV path with ICD-11 MMS linearization. Pass \code{NULL}
+to revert to the bundled dataset.}
 
-\item{map}{Data frame, o ruta a un CSV UTF-8, con el mapeo CIE-10 -> CIE-11.
+\item{map}{Data frame o ruta CSV con el mapeo CIE-10->CIE-11.
 Columnas requeridas: \code{cie10_code}, \code{cie10_desc}, \code{cie11_code},
 \code{cie11_title}, \code{match_type}, \code{score}. /
-A data frame or path to a UTF-8 CSV with the ICD-10 to ICD-11 mapping.}
+Data frame or CSV path with ICD-10 to ICD-11 mapping.}
 }
 \value{
 Invisiblemente \code{TRUE}. / Invisibly \code{TRUE}.
 }
 \description{
-Carga la tabla MMS de CIE-11 y la tabla de mapeo CIE-10 -> CIE-11 en el cache
-interno del paquete. El paquete distribuye \strong{solo codigo}: el usuario aporta
-su propia release de CIE-11 y su tabla de mapeo, ya sea como data frames en
-memoria o como rutas a archivos CSV exportados desde su base de datos local.
-Ningun dato de la clasificacion viene incluido en el paquete.
+Por defecto el paquete usa el dataset embebido \code{cie11_mms} (WHO MMS 2026,
+37.212 entidades en espanol). Llama a esta funcion solo si necesitas usar
+una release diferente o un crosswalk CIE-10->CIE-11 propio.
 }
 \details{
-Llamada sin argumentos, carga un pequeno fixture sintetico (codigos
-inventados, no contenido real de la OMS) para que ejemplos y tests puedan
-ejecutarse sin datos externos.
-
-Loads the ICD-11 MMS table and the ICD-10 to ICD-11 mapping table into the
-package's internal cache. The package ships code only: users supply their own
-ICD-11 release and mapping table, as data frames or as paths to CSV files. No
-classification data is bundled. Called with no arguments, a small synthetic
-fixture is loaded so examples and tests can run without external data.
+By default the package uses the bundled \code{cie11_mms} dataset (WHO MMS 2026,
+37,212 entities in Spanish). Call this function only to override with a
+different release or your own ICD-10->ICD-11 crosswalk.
 }
 \examples{
-# Fixture sintetico (sin datos externos) / synthetic fixture:
+# Volver al dataset embebido / revert to bundled dataset:
 cie11_load()
 
 \dontrun{
-# Tu propia base de datos CIE-11, exportada a CSV (nunca al repo) /
-# your own local ICD-11 database exported to CSV:
-cie11_load(
-  mms = "data/cie11_mms_2026_full.csv",
-  map = "data/mapeo_cie10_cie11_completo.csv"
-)
+# Release personalizada exportada a CSV / custom release exported to CSV:
+cie11_load(mms = "mi_release_cie11.csv")
 }
 }

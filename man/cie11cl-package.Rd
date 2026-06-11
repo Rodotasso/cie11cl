@@ -6,7 +6,7 @@
 \alias{cie11cl-package}
 \title{cie11cl: ICD-11 (CIE-11) Access and ICD-10 to ICD-11 Crosswalks for Chile}
 \description{
-Deterministic access to the World Health Organization International Classification of Diseases, 11th Revision (ICD-11, MMS linearization) in Spanish, with code lookup, lexical search and ICD-10 to ICD-11 crosswalks carrying traceable certainty levels, oriented to the Chilean health system. The package ships code only: users load their own ICD-11 release and mapping tables at runtime; no classification data is bundled. The same input plus the same versioned reference data always yields the same output.
+Deterministic access to the World Health Organization International Classification of Diseases, 11th Revision (ICD-11, MMS linearization) in Spanish, with code lookup, lexical search, hierarchical navigation, cluster validation, and ICD-10 to ICD-11 crosswalks with traceable certainty levels. The package bundles the WHO MMS 2026 linearization (37,212 entities). The same input plus the same versioned reference data always yields the same output.
 }
 \seealso{
 Useful links:
