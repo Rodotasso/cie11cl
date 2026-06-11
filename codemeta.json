@@ -2,7 +2,7 @@
   "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
   "@type": "SoftwareSourceCode",
   "identifier": "cie11cl",
-  "description": "Deterministic access to the World Health Organization International Classification of Diseases, 11th Revision ('ICD-11', 'CIE-11', 'MMS' linearization) in Spanish. Includes exact code lookup, error-tolerant lexical search ('Jaro-Winkler'), hierarchical navigation, cluster coding validation (post-coordination), 'ICD-10' to 'ICD-11' crosswalks with traceable certainty levels (1-5), and read-only 'SQL' over a derived 'SQLite' cache with 'FTS5'. Classification data is not bundled; users supply their own source at runtime.",
+  "description": "Deterministic access to the World Health Organization International Classification of Diseases, 11th Revision (ICD-11, MMS linearization) in Spanish, with code lookup, lexical search, hierarchical navigation, cluster validation, and ICD-10 to ICD-11 crosswalks with traceable certainty levels. The package bundles the WHO MMS 2026 linearization (37,212 entities). The same input plus the same versioned reference data always yields the same output.",
   "name": "cie11cl: ICD-11 (CIE-11) Access and ICD-10 to ICD-11 Crosswalks for Chile",
   "codeRepository": "https://github.com/RodoTasso/cie11cl",
   "issueTracker": "https://github.com/RodoTasso/cie11cl/issues",
@@ -13,23 +13,21 @@
     "name": "R",
     "url": "https://r-project.org"
   },
-  "runtimePlatform": "R version 4.6.0",
+  "runtimePlatform": "R version 4.6.0 (2026-04-24)",
   "author": [
     {
       "@type": "Person",
       "givenName": "Rodolfo",
-      "familyName": "Tasso Suazo",
-      "email": "rtasso@uchile.cl",
-      "@id": "https://orcid.org/0000-0002-1264-4933"
+      "familyName": "Tasso",
+      "email": "rtasso@uchile.cl"
     }
   ],
   "maintainer": [
     {
       "@type": "Person",
       "givenName": "Rodolfo",
-      "familyName": "Tasso Suazo",
-      "email": "rtasso@uchile.cl",
-      "@id": "https://orcid.org/0000-0002-1264-4933"
+      "familyName": "Tasso",
+      "email": "rtasso@uchile.cl"
     }
   ],
   "softwareSuggestions": [
@@ -88,12 +86,6 @@
   "softwareRequirements": {
     "1": {
       "@type": "SoftwareApplication",
-      "identifier": "R",
-      "name": "R",
-      "version": ">= 4.0"
-    },
-    "2": {
-      "@type": "SoftwareApplication",
       "identifier": "stringdist",
       "name": "stringdist",
       "provider": {
@@ -104,36 +96,20 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=stringdist"
     },
-    "3": {
+    "2": {
       "@type": "SoftwareApplication",
       "identifier": "utils",
       "name": "utils"
     },
+    "3": {
+      "@type": "SoftwareApplication",
+      "identifier": "R",
+      "name": "R",
+      "version": ">= 4.0"
+    },
     "SystemRequirements": null
   },
-  "citation": [
-    {
-      "@type": "SoftwareSourceCode",
-      "datePublished": "2026",
-      "author": [
-        {
-          "@type": "Person",
-          "givenName": "Rodolfo",
-          "familyName": "Tasso Suazo",
-          "email": "rtasso@uchile.cl",
-          "@id": "https://orcid.org/0000-0002-1264-4933"
-        }
-      ],
-      "name": "cie11cl: ICD-11 (CIE-11) Access and ICD-10 to ICD-11 Crosswalks for Chile",
-      "url": "https://github.com/RodoTasso/cie11cl",
-      "description": "R package version 0.1.0. Grupo de Ciencia de Datos para Salud Publica, Escuela de Salud Publica, U. de Chile."
-    }
-  ],
+  "fileSize": "102.061KB",
   "releaseNotes": "https://github.com/RodoTasso/cie11cl/blob/main/NEWS.md",
-  "readme": "https://github.com/RodoTasso/cie11cl/blob/main/README.md",
-  "contIntegration": [
-    "https://github.com/RodoTasso/cie11cl/actions/workflows/R-CMD-check.yaml",
-    "https://github.com/RodoTasso/cie11cl/actions/workflows/test-coverage.yaml"
-  ],
-  "developmentStatus": "https://lifecycle.r-lib.org/articles/stages.html#experimental"
+  "readme": "https://github.com/Rodotasso/cie11cl/blob/main/README.md"
 }
